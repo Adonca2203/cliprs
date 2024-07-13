@@ -1,10 +1,11 @@
 [package]
-name = "clipboard-manager-rs"
+name = "cliprs"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 clipboard = "0.5.0"
-clipboard-master = "3.1.3"
-gtk = { version = "0.8.2", package = "gtk4", features = ["v4_14"] }
+fork = "0.1.23"
 
+[target.'cfg(unix)'.dependencies]
+clipboard-master = "3.1.3"
