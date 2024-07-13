@@ -52,7 +52,7 @@ pub struct X11ClipboardManager {
 }
 
 impl X11ClipboardManager {
-    pub fn new() -> Self {
+    fn new() -> Self {
         match ClipboardContext::new() {
             Ok(ctx) => {
                 let stdout = format!("/tmp/{}.log", PACKAGE);
@@ -67,7 +67,7 @@ impl X11ClipboardManager {
         }
     }
 
-    pub fn run(&self) {
+    pub fn run() {
         let mut master = Master::new(X11ClipboardManager::new());
 
         master.run().expect("Success");
