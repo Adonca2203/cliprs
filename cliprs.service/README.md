@@ -10,7 +10,7 @@ Currently only works for x11 but have plans of adding other OSs and maybe Waylan
 ```bash
 cd ~
 git clone https://github.com/Adonca2203/cliprs.git
-cd cliprs
+cd cliprs/cliprs.service
 cargo build --release
 ./target/release/cliprs
 ```
