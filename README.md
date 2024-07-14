@@ -18,8 +18,8 @@ cargo build --release
 ### Set up an User Level Service
 You will want to create a user systemd service so that this runs automatically on user login.
 To do so you can:
-1. If not present, create the following directories `~/config/systemd/user`
-2. Create a file inside of `~/config/systemd/user` called `cliprs.service`
+1. If not present, create the following directories `~/.config/systemd/user`
+2. Create a file inside of `~/.config/systemd/user` called `cliprs.service`
 3. Paste the following into it, replacing `ExecStart` with your full path
 ```
 [Service]
