@@ -1,10 +1,11 @@
 mod clipboard_managers;
 
-use clipboard_managers::x11_clipboard_manager::X11ClipboardManager;
+use clipboard_managers::clipboard_manager::initialize;
 use fork::{daemon, Fork};
 
 fn main() {
     if let Ok(Fork::Child) = daemon(false, false) {
-        X11ClipboardManager::run();
+        let manager = initialize();
+        manager.run();
     }
 }
