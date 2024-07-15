@@ -1,10 +1,9 @@
-# Cliprs - A clipboard logger written in Rust
+# Cliprs - A clipboard Manager written in Rust
 
-This logs your clipboard history to a txt file in /tmp
+This logs your clipboard history to a txt file in /tmp and uses a gtk-4 based front-end to display it
 
-I plan to create a GTK4 companion applicaion which will server as a frontend for a clipboard manager using this service
-
-Currently only works for x11 but have plans of adding other OSs and maybe Wayland
+The logging part is done and will be working on the front-end part
+Currently only works for x11 but have plans of adding other OSs and maybe Wayland.
 
 ## Usage
 ```bash
