@@ -26,7 +26,7 @@ impl ClipboardHandler for X11ClipboardManager {
                     .open(&self.logs_path)
                     .unwrap();
 
-                let msg = format!("#!block-start\n{}\n#!block-end", contents.to_string());
+                let msg = format!("#!block-start\n{}\n#!block-end\n", contents.to_string());
 
                 let _ = file.write_all(msg.as_bytes());
             }
