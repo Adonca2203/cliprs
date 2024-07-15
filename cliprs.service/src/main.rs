@@ -7,7 +7,7 @@ use fork::{fork, setsid, Fork};
 
 fn main() {
     match daemonize_and_get_pid() {
-        Ok((_, pid)) => {
+        Ok(pid) => {
             let mut pid_file = OpenOptions::new()
                 .write(true)
                 .create(true)
@@ -27,12 +27,12 @@ fn main() {
     }
 }
 
-fn daemonize_and_get_pid() -> Result<(Fork, i32), i32> {
+fn daemonize_and_get_pid() -> Result<i32, i32> {
     match fork() {
         Ok(Fork::Parent(_)) => exit(0),
         Ok(Fork::Child) => {
             let sid = setsid();
-            Ok((fork().unwrap(), sid.unwrap()))
+            Ok(sid.unwrap())
         }
         Err(err) => Err(err),
     }
