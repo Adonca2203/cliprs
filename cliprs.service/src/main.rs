@@ -11,7 +11,7 @@ fn main() {
             let mut pid_file = OpenOptions::new()
                 .write(true)
                 .create(true)
-                .open("/tmp/clriprs.pid")
+                .open("/tmp/cliprs.pid")
                 .unwrap();
 
             if let Err(err) = pid_file.write(&pid.to_string().as_bytes()) {
