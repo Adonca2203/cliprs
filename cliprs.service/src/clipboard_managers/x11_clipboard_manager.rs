@@ -19,6 +19,9 @@ impl ClipboardHandler for X11ClipboardManager {
     fn on_clipboard_change(&mut self) -> CallbackResult {
         match self.ctx.get_contents() {
             Ok(contents) => {
+                if contents.trim().is_empty() {
+                    return CallbackResult::Next;
+                }
                 let mut file = OpenOptions::new()
                     .write(true)
                     .create(true)
@@ -26,7 +29,10 @@ impl ClipboardHandler for X11ClipboardManager {
                     .open(&self.logs_path)
                     .unwrap();
 
-                let msg = format!("#!block-start\n{}\n#!block-end\n", contents.to_string());
+                let msg = format!(
+                    "{}\n#!block-end\n",
+                    contents.trim().to_string()
+                );
 
                 let _ = file.write_all(msg.as_bytes());
             }
