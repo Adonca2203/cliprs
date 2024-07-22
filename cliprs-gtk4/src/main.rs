@@ -1,14 +1,18 @@
 use std::{
     fs::{self},
     str::FromStr,
-    thread,
 };
 
-use gtk4::prelude::*;
+use gtk4::{
+    gdk::{Key, ModifierType},
+    glib::Propagation,
+    prelude::*,
+    EventControllerKey,
+};
 use gtk4::{glib, Application, ApplicationWindow, Button};
 use log_manager::LogManager;
-use rdev::{listen, Event, EventType, Key};
 use sysinfo::{Pid, System};
+mod keyboard_manager;
 mod log_manager;
 
 const APP_ID: &str = "org.cliprs";
@@ -30,18 +34,7 @@ fn main() -> glib::ExitCode {
 
     app.connect_activate(build_ui);
 
-    thread::spawn(|| {
-        if let Err(error) = listen(callback) {
-            println!("Error: {:?}", error);
-        }
-    });
     app.run()
-}
-
-fn callback(event: Event) {
-    if EventType::KeyPress(Key::MetaLeft) == event.event_type {
-        println!("Pressed left meta");
-    }
 }
 
 fn build_ui(app: &Application) {
@@ -63,5 +56,21 @@ fn build_ui(app: &Application) {
         .child(&button)
         .build();
 
+    let event_controller = EventControllerKey::new();
+    event_controller.connect_key_pressed(move |_, key, _, modifier| {
+        match key {
+            Key::v | Key::V => {
+                if modifier == ModifierType::META_MASK {
+                    println!("Pressed Meta V");
+                }
+
+                println!("{:?} -- {:?}", key, modifier);
+            }
+            _ => (),
+        }
+        Propagation::Proceed
+    });
+
     window.present();
+    window.add_controller(event_controller);
 }
