@@ -12,7 +12,6 @@ use gtk4::{
 use gtk4::{glib, Application, ApplicationWindow, Button};
 use log_manager::LogManager;
 use sysinfo::{Pid, System};
-mod keyboard_manager;
 mod log_manager;
 
 const APP_ID: &str = "org.cliprs";
