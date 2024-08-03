@@ -1,0 +1,12 @@
+[Service]
+Type=forking
+ExecStart=/usr/lib/cliprs/cliprs
+Restart=always
+RestartSec=1
+
+[Unit]
+Description=Clipboard Manager
+StartLimitIntervalSec=0
+
+[Install]
+WantedBy=default.target
