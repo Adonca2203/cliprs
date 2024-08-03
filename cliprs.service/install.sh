@@ -16,10 +16,7 @@ echo "Directory created"
 echo "Copying service binary"
 yes | sudo cp -rf ./target/release/cliprs $INSTALL_DIR
 
-read -p "Would you like the service to auto start on login? [yes/no]" RESP
-RESP=${auto_start:-yes}
-
-RESP=$RESP | tr '[:upper:]' '[:lower:]'
+read -p "Would you like the service to auto start on login? [yes/no]" -i yes -r RESP
 
 if [ $RESP = "y" ] || [ $RESP = "yes" ] || [ -z $RESP ]
 then
