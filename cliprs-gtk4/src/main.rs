@@ -3,13 +3,8 @@ use std::{
     str::FromStr,
 };
 
-use gtk4::{
-    gdk::{Key, ModifierType},
-    glib::Propagation,
-    prelude::*,
-    EventControllerKey,
-};
 use gtk4::{glib, Application, ApplicationWindow, Button};
+use gtk4::{prelude::*, Box, SearchEntry};
 use log_manager::LogManager;
 use sysinfo::{Pid, System};
 mod log_manager;
@@ -28,8 +23,6 @@ fn main() -> glib::ExitCode {
     }
 
     let app = Application::builder().application_id(APP_ID).build();
-    let mut manager = LogManager::new();
-    manager.update_logs();
 
     app.connect_activate(build_ui);
 
@@ -37,39 +30,49 @@ fn main() -> glib::ExitCode {
 }
 
 fn build_ui(app: &Application) {
-    let button = Button::builder()
-        .label("Press me!")
-        .margin_top(12)
-        .margin_bottom(12)
-        .margin_start(12)
-        .margin_end(12)
+    let mut manager = LogManager::new();
+    manager.update_logs();
+
+    let vbox = Box::builder()
+        .orientation(gtk4::Orientation::Vertical)
+        .spacing(6)
         .build();
 
-    button.connect_clicked(|button| button.set_label("Hello World!"));
+    let search_entry = SearchEntry::builder()
+        .placeholder_text("Search history...")
+        .build();
+
+    vbox.append(&search_entry);
+
+    for item in manager.history {
+        let button = Button::builder().label(item).build();
+
+        vbox.append(&button);
+    }
+
+    let button_container = vbox.clone();
+
+    search_entry.connect_changed(move |entry| {
+        let text = entry.text().to_string();
+
+        for child in &button_container.observe_children() {
+            if let Some(button) = child.unwrap().downcast_ref::<Button>() {
+                if button.label().unwrap().contains(&text) {
+                    button.show();
+                } else {
+                    button.hide();
+                }
+            }
+        }
+    });
 
     let window = ApplicationWindow::builder()
         .application(app)
         .title("Cliprs")
         .default_width(360)
         .default_height(600)
-        .child(&button)
+        .child(&vbox)
         .build();
 
-    let event_controller = EventControllerKey::new();
-    event_controller.connect_key_pressed(move |_, key, _, modifier| {
-        match key {
-            Key::v | Key::V => {
-                if modifier == ModifierType::META_MASK {
-                    println!("Pressed Meta V");
-                }
-
-                println!("{:?} -- {:?}", key, modifier);
-            }
-            _ => (),
-        }
-        Propagation::Proceed
-    });
-
     window.present();
-    window.add_controller(event_controller);
 }

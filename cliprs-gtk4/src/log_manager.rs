@@ -62,10 +62,12 @@ impl LogManager {
     fn parse_log() -> Result<Vec<String>, io::Error> {
         match fs::read_to_string(PATH_TO_LOGS) {
             Ok(contents) => {
-                let resp: Vec<String> = contents
+                let mut resp: Vec<String> = contents
                     .split(END_BLOCK)
                     .map(|s| s.trim().to_string())
                     .collect();
+
+                resp.truncate(resp.len() - 1);
 
                 Ok(resp)
             }
