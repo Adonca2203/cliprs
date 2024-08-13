@@ -1,9 +1,10 @@
 mod clipboard_managers;
+mod server;
 
 use std::{fs::OpenOptions, io::Write, process::exit};
 
-use clipboard_managers::clipboard_manager::initialize;
 use fork::{fork, setsid, Fork};
+use server::tokio_server::ApplicationServer;
 
 fn main() {
     match daemonize_and_get_pid() {
@@ -17,9 +18,7 @@ fn main() {
             if let Err(err) = pid_file.write(&pid.to_string().as_bytes()) {
                 panic!("Could not write pid to file, {}", err);
             }
-
-            let manager = initialize();
-            manager.run();
+            tokio_main();
         }
         Err(err) => {
             panic!("Could not fork {}", err);
@@ -36,4 +35,11 @@ fn daemonize_and_get_pid() -> Result<i32, i32> {
         }
         Err(err) => Err(err),
     }
+}
+
+#[tokio::main]
+async fn tokio_main() {
+    let server = ApplicationServer::new();
+
+    let _ = server.run().await;
 }
