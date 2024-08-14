@@ -2,7 +2,7 @@ use clipboard_master::ClipboardHandler;
 
 use super::x11_clipboard_manager::X11ClipboardManager;
 
-pub trait ClipboardManager: ClipboardHandler {
+pub trait ClipboardManager: ClipboardHandler + Send + Sync {
     fn run(&self);
 }
 

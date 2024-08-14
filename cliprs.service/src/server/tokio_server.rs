@@ -1,12 +1,16 @@
+use std::sync::{Arc, Mutex};
+
 use clipboard::{ClipboardContext, ClipboardProvider};
 use mini_redis::{Connection, Frame};
 use tokio::net::{TcpListener, TcpStream};
 
-use crate::clipboard_managers::clipboard_manager;
+use crate::clipboard_managers::clipboard_manager::{self, ClipboardManager};
+type Manager = Arc<Mutex<Box<dyn ClipboardManager>>>;
 
 pub struct ApplicationServer {
-    pub ip: String,
-    pub port: String,
+    ip: String,
+    port: String,
+    mngr: Manager,
 }
 
 impl ApplicationServer {
@@ -14,6 +18,7 @@ impl ApplicationServer {
         Self {
             ip: "127.0.0.1".to_string(),
             port: "6379".to_string(),
+            mngr: Arc::new(Mutex::new(clipboard_manager::initialize())),
         }
     }
 
@@ -22,11 +27,13 @@ impl ApplicationServer {
             .await
             .unwrap();
 
-        tokio::spawn(async move {
-            let clipboard_manager = clipboard_manager::initialize();
-            clipboard_manager.run();
-        });
         loop {
+            let mngr = self.mngr.clone();
+
+            tokio::spawn(async move {
+                mngr.lock().unwrap().run();
+            });
+
             let (socket, _) = listener.accept().await.unwrap();
 
             tokio::spawn(async move {
