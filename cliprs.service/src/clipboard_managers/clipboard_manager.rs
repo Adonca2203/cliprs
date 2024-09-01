@@ -4,6 +4,7 @@ use super::x11_clipboard_manager::X11ClipboardManager;
 
 pub trait ClipboardManager: ClipboardHandler + Send + Sync {
     fn run(&self);
+    fn get_history(&self) -> Vec<String>;
 }
 
 pub fn initialize() -> Box<dyn ClipboardManager> {

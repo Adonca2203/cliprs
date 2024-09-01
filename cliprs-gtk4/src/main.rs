@@ -3,11 +3,15 @@ use std::{
     str::FromStr,
 };
 
-use gtk4::{glib, Application, ApplicationWindow, Button};
+use gtk4::{
+    glib::{self},
+    Application, ApplicationWindow, Button,
+};
 use gtk4::{prelude::*, Box, SearchEntry};
 use log_manager::LogManager;
 use sysinfo::{Pid, System};
 mod log_manager;
+use mini_redis::client;
 
 const APP_ID: &str = "org.cliprs";
 const PATH_TO_PID: &str = "/tmp/cliprs.pid";
@@ -46,6 +50,18 @@ fn build_ui(app: &Application) {
 
     for item in manager.history {
         let button = Button::builder().label(item).build();
+
+        button.connect_clicked(move |btn| {
+            use tokio::runtime::Runtime;
+
+            let rt = Runtime::new().expect("Created tokio Runtime");
+            rt.block_on(async {
+                let addr = "127.0.0.1:6379";
+                if let Ok(mut conn) = client::connect(addr).await {
+                    let _ = conn.set(&btn.label().unwrap().to_string(), "".into()).await;
+                }
+            });
+        });
 
         vbox.append(&button);
     }
