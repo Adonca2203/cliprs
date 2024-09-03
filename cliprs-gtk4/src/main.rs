@@ -8,6 +8,7 @@ use gtk4::{
     Application, ApplicationWindow, Button,
 };
 use gtk4::{prelude::*, Box, SearchEntry};
+use log::debug;
 use log_manager::LogManager;
 use sysinfo::{Pid, System};
 mod log_manager;
@@ -17,6 +18,7 @@ const APP_ID: &str = "org.cliprs";
 const PATH_TO_PID: &str = "/tmp/cliprs.pid";
 
 fn main() -> glib::ExitCode {
+    simple_logging::log_to_file("/tmp/cliprs-gtk.debug", log::LevelFilter::Debug).unwrap();
     let pid = fs::read_to_string(PATH_TO_PID).unwrap();
 
     let sys = System::new_all();
@@ -34,8 +36,8 @@ fn main() -> glib::ExitCode {
 }
 
 fn build_ui(app: &Application) {
-    let mut manager = LogManager::new();
-    manager.update_logs();
+    let logs = LogManager::get_logs();
+    debug!("logs: {:?}", logs);
 
     let vbox = Box::builder()
         .orientation(gtk4::Orientation::Vertical)
@@ -48,7 +50,11 @@ fn build_ui(app: &Application) {
 
     vbox.append(&search_entry);
 
-    for item in manager.history {
+    for item in logs {
+        if item.is_empty() {
+            continue;
+        }
+
         let button = Button::builder().label(item).build();
 
         button.connect_clicked(move |btn| {

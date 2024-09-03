@@ -9,6 +9,7 @@ use server::tokio_server::ApplicationServer;
 fn main() {
     match daemonize_and_get_pid() {
         Ok(pid) => {
+            simple_logging::log_to_file("/tmp/cliprs.debug", log::LevelFilter::Debug).unwrap();
             let mut pid_file = OpenOptions::new()
                 .write(true)
                 .create(true)

@@ -1,16 +1,21 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 use clipboard::{ClipboardContext, ClipboardProvider};
+use lazy_static::lazy_static;
+use log::debug;
 use mini_redis::{Connection, Frame};
 use tokio::net::{TcpListener, TcpStream};
 
-use crate::clipboard_managers::clipboard_manager::{self, ClipboardManager};
-type Manager = Arc<Mutex<Box<dyn ClipboardManager>>>;
+use crate::clipboard_managers::clipboard_manager::{self, VectorWrapper};
+
+lazy_static! {
+    pub static ref DATA: Mutex<VectorWrapper<String>> =
+        Mutex::new(VectorWrapper::<String>::new());
+}
 
 pub struct ApplicationServer {
     ip: String,
     port: String,
-    mngr: Manager,
 }
 
 impl ApplicationServer {
@@ -18,7 +23,6 @@ impl ApplicationServer {
         Self {
             ip: "127.0.0.1".to_string(),
             port: "6379".to_string(),
-            mngr: Arc::new(Mutex::new(clipboard_manager::initialize())),
         }
     }
 
@@ -28,23 +32,21 @@ impl ApplicationServer {
             .unwrap();
 
         loop {
-            let mngr = self.mngr.clone();
-
             tokio::spawn(async move {
-                mngr.lock().unwrap().run();
+                let manager = clipboard_manager::initialize();
+                manager.run();
             });
 
             let (socket, _) = listener.accept().await.unwrap();
 
-            let other = self.mngr.clone();
             tokio::spawn(async move {
                 let ctx: ClipboardContext = ClipboardProvider::new().unwrap();
-                Self::process(socket, ctx, other).await;
+                Self::process(socket, ctx).await;
             });
         }
     }
 
-    async fn process(socket: TcpStream, mut ctx: ClipboardContext, manager: Manager) {
+    async fn process(socket: TcpStream, mut ctx: ClipboardContext) {
         use mini_redis::Command::{self, Get, Set};
 
         let mut connection = Connection::new(socket);
@@ -52,24 +54,22 @@ impl ApplicationServer {
         while let Some(frame) = connection.read_frame().await.unwrap() {
             let response = match Command::from_frame(frame).unwrap() {
                 Set(cmd) => {
+                    debug!("cmd received: {:?}", cmd.key());
                     ctx.set_contents(cmd.key().to_string().to_owned()).unwrap();
                     Frame::Simple("OK".to_string())
                 }
-                Get(cmd) => {
-                    let history = manager.lock().unwrap().get_history();
-                    let value: Vec<&String> = history
-                        .iter()
-                        .filter(|val| val.as_str() == cmd.key())
-                        .collect();
-                    if value.len() > 0 {
-                        Frame::Simple(value.first().unwrap().to_string());
-                        return;
-                    } else {
-                        Frame::Null
-                    }
+                Get(_) => {
+                    debug!("Getting history...");
+                    let lock = DATA.lock().unwrap();
+                    let history = lock.clone();
+                    debug!("Got history: {:?}", history);
+                    drop(lock);
+                    Frame::Simple(history.to_comma_separated())
                 }
                 cmd => panic!("Unimplemented {:?}", cmd),
             };
+
+            debug!("Frame: {:?}", response);
 
             connection.write_frame(&response).await.unwrap();
         }

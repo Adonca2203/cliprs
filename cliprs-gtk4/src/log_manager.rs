@@ -1,77 +1,33 @@
-use std::{fs, io, time::SystemTime};
+use mini_redis::client;
 
-const PATH_TO_LOGS: &str = "/tmp/cliprs.log";
-const END_BLOCK: &str = "#!block-end";
-pub struct LogManager {
-    last_edited: Option<SystemTime>,
-    pub history: Vec<String>,
-}
+pub struct LogManager {}
 
 impl LogManager {
-    pub fn new() -> Self {
-        Self {
-            last_edited: None,
-            history: Vec::new(),
-        }
-    }
+    pub fn get_logs() -> Vec<String> {
+        let mut ret = Vec::new();
 
-    pub fn update_logs(&mut self) {
-        if self.does_log_need_update() {
-            self.history = match Self::parse_log() {
-                Ok(logs) => logs,
-                Err(err) => panic!("{}", err),
-            };
-        }
+        use tokio::runtime::Runtime;
 
-        dbg!(&self.history);
-    }
+        let rt = Runtime::new().expect("Created Log Tokio Runtime");
 
-    fn does_log_need_update(&mut self) -> bool {
-        let last_modified = Self::get_last_modified();
-        match self.last_edited {
-            None => {
-                self.last_edited = Some(last_modified);
-                return true;
-            }
-            Some(time) => {
-                if time != last_modified {
-                    self.last_edited = Some(last_modified);
-                    return true;
+        rt.block_on(async {
+            let addr = "127.0.0.1:6379";
+            if let Ok(mut conn) = client::connect(addr).await {
+                ret = match conn.get("logs").await {
+                    Ok(result) => match result {
+                        Some(str) => {
+                            let text = String::from_utf8(str.to_vec()).unwrap();
+                            text.split(",").map(|x| x.to_string()).collect()
+                        }
+                        None => vec![],
+                    },
+                    Err(err) => {
+                        println!("Error: {:?}", err);
+                        vec![]
+                    }
                 }
             }
-        }
-
-        false
-    }
-
-    fn get_last_modified() -> SystemTime {
-        match fs::metadata(PATH_TO_LOGS) {
-            Ok(data) => {
-                let most_recent = match data.modified() {
-                    Ok(time) => time,
-                    Err(err) => panic!("{}", err),
-                };
-                most_recent
-            }
-            Err(_) => {
-                panic!("Invalid OS for reading modified metadata");
-            }
-        }
-    }
-
-    fn parse_log() -> Result<Vec<String>, io::Error> {
-        match fs::read_to_string(PATH_TO_LOGS) {
-            Ok(contents) => {
-                let mut resp: Vec<String> = contents
-                    .split(END_BLOCK)
-                    .map(|s| s.trim().to_string())
-                    .collect();
-
-                resp.truncate(resp.len() - 1);
-
-                Ok(resp)
-            }
-            Err(err) => Err(io::Error::new(io::ErrorKind::Other, err)),
-        }
+        });
+        ret
     }
 }

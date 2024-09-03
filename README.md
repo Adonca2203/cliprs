@@ -1,22 +1,24 @@
 # Cliprs - A clipboard Manager written in Rust
 
-This logs your clipboard history to a txt file in /tmp and uses a gtk-4 based front-end to display it
+Provided is a Clipboard Manager service as well as a Front End GUI using GTK-4
 
-The logging part is done and will be working on the front-end part
-Currently only works for x11 but have plans of adding other OSs and maybe Wayland.
+This manager currently only works on systems running X11/xorg as their display and is primarily targeted towards Linux systems.
 
 ## Usage
+You can easily build and install this application by running the install bash script:
 ```bash
 cd ~
+cd cliprs
 git clone https://github.com/Adonca2203/cliprs.git
-cd cliprs/cliprs.service
-cargo build --release
-./target/release/cliprs
+chmod -x install.sh
+. ./install.sh
 ```
 
 ### Set up an User Level Service
-You will want to create a user systemd service so that this runs automatically on user login.
-To do so you can:
+There is a basic service file included in the repo. The install script can also automatically set this up if you answer
+yes when prompted
+
+If you wish to perform this step manuall you can follow these steps:
 1. If not present, create the following directories `~/.config/systemd/user`
 2. Create a file inside of `~/.config/systemd/user` called `cliprs.service`
 3. Paste the following into it, replacing `ExecStart` with your full path
@@ -34,7 +36,7 @@ StartLimitIntervalSec=0
 [Install]
 WantedBy=default.target
 ```
-4. Run the following commands to enable and run it
+4. Run the following commands to enable (this makes it so it runs automatically on log in) and start it
 ```bash
 systemctl --user enable cliprs.service
 systemctl --user start cliprs.service
@@ -42,6 +44,15 @@ systemctl --user start cliprs.service
 
 Once done, the service will automatically start up on user login to x and start logging your clipboard
 
+### Set up GUI/GTK App
+In order to view your clipboard history through a basic GUI you will need to build and run the binary in cliprs-gtk4.
+
+It is recommended that you set it up so that you can run this easily via a hotkey for easiest access.
+
+I currently use [sxhkd](https://github.com/baskerville/sxhkd) and have provided a basic user service file which can be added
+to the same directory and using the same method as shown above.
+
+
 # Known Limitations
 1. Only able to log text (support for images/video maybe?)
-2. Only able to log x11 (Planned support for Windows/MacOs/Wayland
+2. Only able to log x11 (Planned support for Windows/MacOs/Wayland?)

@@ -6,9 +6,14 @@ async fn main() -> Result<()> {
     let mut client = client::connect("127.0.0.1:6379").await?;
 
     // Set the key "hello" with value "world"
-    client.set("hello", "world".into()).await?;
+    client.set("world", "world".into()).await?;
 
-    let result = client.get("hello").await?;
+    let result = match client.get("world").await {
+        Ok(result) => result,
+        Err(err) => {
+            panic!("Error: {:?}", err);
+        }
+    };
 
     println!("got value from server; result={:?}", result);
 

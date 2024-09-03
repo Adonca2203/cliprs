@@ -5,6 +5,8 @@ use clipboard_master::{CallbackResult, ClipboardHandler, Master};
 use std::io::Write;
 use std::{fs::OpenOptions, io};
 
+use crate::server::tokio_server::DATA;
+
 use super::clipboard_manager::ClipboardManager;
 
 const PACKAGE: &str = env!("CARGO_PKG_NAME");
@@ -13,7 +15,6 @@ pub struct X11ClipboardManager {
     ctx: ClipboardContext,
     logs_path: String,
     stderr: String,
-    history: Vec<String>,
 }
 
 impl ClipboardHandler for X11ClipboardManager {
@@ -30,12 +31,17 @@ impl ClipboardHandler for X11ClipboardManager {
                     .open(&self.logs_path)
                     .unwrap();
 
-                let msg = format!(
-                    "{}\n#!block-end\n",
-                    contents.trim().to_string()
-                );
+                let msg = format!("{}\n#!block-end\n", contents.trim().to_string());
 
-                self.history.push(contents);
+                let mut lock = DATA.lock().unwrap();
+
+                if lock.contains(&contents) {
+                    lock.remove(&contents);
+                }
+
+                lock.insert(contents);
+
+                drop(lock);
 
                 let _ = file.write_all(msg.as_bytes());
             }
@@ -74,10 +80,6 @@ impl ClipboardManager for X11ClipboardManager {
 
         master.run().expect("Success");
     }
-
-    fn get_history(&self) -> Vec<String> {
-        self.history.clone()
-    }
 }
 
 impl X11ClipboardManager {
@@ -90,7 +92,6 @@ impl X11ClipboardManager {
                     ctx,
                     logs_path: stdout,
                     stderr,
-                    history: Vec::new(),
                 }
             }
             Err(err) => panic!("Unable to start context {err}"),
