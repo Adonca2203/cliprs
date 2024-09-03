@@ -37,7 +37,6 @@ fn main() -> glib::ExitCode {
 
 fn build_ui(app: &Application) {
     let logs = LogManager::get_logs();
-    debug!("logs: {:?}", logs);
 
     let vbox = Box::builder()
         .orientation(gtk4::Orientation::Vertical)

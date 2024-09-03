@@ -2,7 +2,6 @@ use std::sync::Mutex;
 
 use clipboard::{ClipboardContext, ClipboardProvider};
 use lazy_static::lazy_static;
-use log::debug;
 use mini_redis::{Connection, Frame};
 use tokio::net::{TcpListener, TcpStream};
 
@@ -54,22 +53,17 @@ impl ApplicationServer {
         while let Some(frame) = connection.read_frame().await.unwrap() {
             let response = match Command::from_frame(frame).unwrap() {
                 Set(cmd) => {
-                    debug!("cmd received: {:?}", cmd.key());
                     ctx.set_contents(cmd.key().to_string().to_owned()).unwrap();
                     Frame::Simple("OK".to_string())
                 }
                 Get(_) => {
-                    debug!("Getting history...");
                     let lock = DATA.lock().unwrap();
                     let history = lock.clone();
-                    debug!("Got history: {:?}", history);
                     drop(lock);
                     Frame::Simple(history.to_comma_separated())
                 }
                 cmd => panic!("Unimplemented {:?}", cmd),
             };
-
-            debug!("Frame: {:?}", response);
 
             connection.write_frame(&response).await.unwrap();
         }
