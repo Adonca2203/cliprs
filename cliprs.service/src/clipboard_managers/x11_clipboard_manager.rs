@@ -2,19 +2,15 @@ extern crate clipboard_master;
 
 use clipboard::{ClipboardContext, ClipboardProvider};
 use clipboard_master::{CallbackResult, ClipboardHandler, Master};
-use std::io::Write;
-use std::{fs::OpenOptions, io};
+use log::error;
+use std::io;
 
 use crate::server::tokio_server::DATA;
 
 use super::clipboard_manager::ClipboardManager;
 
-const PACKAGE: &str = env!("CARGO_PKG_NAME");
-
 pub struct X11ClipboardManager {
     ctx: ClipboardContext,
-    logs_path: String,
-    stderr: String,
 }
 
 impl ClipboardHandler for X11ClipboardManager {
@@ -24,15 +20,6 @@ impl ClipboardHandler for X11ClipboardManager {
                 if contents.trim().is_empty() {
                     return CallbackResult::Next;
                 }
-                let mut file = OpenOptions::new()
-                    .write(true)
-                    .create(true)
-                    .append(true)
-                    .open(&self.logs_path)
-                    .unwrap();
-
-                let msg = format!("{}\n#!block-end\n", contents.trim().to_string());
-
                 let mut lock = DATA.lock().unwrap();
 
                 if lock.contains(&contents) {
@@ -42,34 +29,16 @@ impl ClipboardHandler for X11ClipboardManager {
                 lock.insert(contents);
 
                 drop(lock);
-
-                let _ = file.write_all(msg.as_bytes());
             }
             Err(err) => {
-                let mut file = OpenOptions::new()
-                    .write(true)
-                    .append(true)
-                    .create(true)
-                    .open(&self.stderr)
-                    .unwrap();
-
-                let msg = format!("Error getting clipboard contents: {}", err.to_string());
-                let _ = file.write_all(msg.as_bytes());
+                error!("Error getting clipboard contents: {:?}", err);
             }
         }
         CallbackResult::Next
     }
 
     fn on_clipboard_error(&mut self, error: io::Error) -> CallbackResult {
-        let mut file = OpenOptions::new()
-            .write(true)
-            .append(true)
-            .create(true)
-            .open(&self.stderr)
-            .unwrap();
-
-        let msg = format!("Error getting clipboard contents: {}", error.to_string());
-        let _ = file.write_all(msg.as_bytes());
+        error!("Error getting clipboard contents: {:?}", error);
         CallbackResult::Next
     }
 }
@@ -85,15 +54,7 @@ impl ClipboardManager for X11ClipboardManager {
 impl X11ClipboardManager {
     pub fn new() -> Self {
         match ClipboardContext::new() {
-            Ok(ctx) => {
-                let stdout = format!("/tmp/{}.log", PACKAGE);
-                let stderr = format!("/tmp/{}.err", PACKAGE);
-                Self {
-                    ctx,
-                    logs_path: stdout,
-                    stderr,
-                }
-            }
+            Ok(ctx) => Self { ctx },
             Err(err) => panic!("Unable to start context {err}"),
         }
     }
