@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Clipboard Manager
+Type=Application
+NoDisplay=true
+TryExec=/usr/lib/cliprs/cliprs
+Exec=systemctl --user start cliprs

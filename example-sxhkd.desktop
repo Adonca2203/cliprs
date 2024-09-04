@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Simple X Hotkey Daemon
+Type=Application
+NoDisplay=true
+TryExec=/usr/bin/sxhkd
+Exec=systemctl --user start sxhkd

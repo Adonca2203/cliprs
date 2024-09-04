@@ -8,7 +8,6 @@ use gtk4::{
     Application, ApplicationWindow, Button,
 };
 use gtk4::{prelude::*, Box, SearchEntry};
-use log::debug;
 use log_manager::LogManager;
 use sysinfo::{Pid, System};
 mod log_manager;
@@ -66,6 +65,7 @@ fn build_ui(app: &Application) {
                     let _ = conn.set(&btn.label().unwrap().to_string(), "".into()).await;
                 }
             });
+
         });
 
         vbox.append(&button);
