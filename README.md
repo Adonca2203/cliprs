@@ -8,8 +8,8 @@ This manager currently only works on systems running X11/xorg as their display a
 You can easily build and install this application by running the install bash script:
 ```bash
 cd ~
-cd cliprs
 git clone https://github.com/Adonca2203/cliprs.git
+cd cliprs
 chmod -x install.sh
 . ./install.sh
 ```
